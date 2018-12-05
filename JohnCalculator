@@ -2,141 +2,97 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Stack;
 
 public class JohnCalculator {
 
 	public static BufferedReader buf = new BufferedReader(new InputStreamReader(System.in));
 	public static int st = 48;
 	public static int ed = 57;
-	public static List<Integer> oprts = Arrays.asList(43, 45, 47, 42, 94);
-
+	public static List<String> oprts = Arrays.asList("+","-","*","/","^","(",")");
+	public static Stack<String> stack=null;
+	public static Stack<Integer> bracOp=null;
+	public static int combined=0;
 	public static void main(String[] args) throws Exception {
-		char a = (int) '1';
-		System.out.println(a);
-		StringBuffer sb = new StringBuffer();
-		sb.append("abcdef");
-		sb.replace(2, 4, "z");
-		System.out.println(sb);
-
-//		int loop=Integer.parseInt(buf.readLine());
-//		List<String> expl=new ArrayList<>(loop);
-//		for(int i=0;i<loop;i++) {
-//			expl.add(buf.readLine());
-//		}
-//		expl.forEach(e->{
-//			System.out.println(result(e));
-//		});
+		//String e="7+((10*5^2)+(7)+(1))";
+		int loop=Integer.parseInt(buf.readLine());
+		List<String> qns=new ArrayList<>(loop);
+		while(loop-->0) {
+			qns.add(buf.readLine());
+		}
+		for(int i=0;i<qns.size();i++) {
+			soln(qns.get(i),i+1);
+		}
 	}
-
-	public static String result(String expr) {
-		String ret = "";
-		int res = 0;
-		int bc = 0;
-		StringBuffer exprb = new StringBuffer(expr.length());
-		boolean valid = true;
-		for (int i = 0; i < expr.length() - 1; i++) {
-			if (expr.charAt(i) > 47 && expr.charAt(i) < 58) {
-				if (expr.charAt(i + 1) > 47 && expr.charAt(i + 1) < 58) {
-					// 2 digit number found
-					valid = false;
-					break;
-				}
-			}
-			if (expr.charAt(i) == '(') {
-				bc++;
-			} else if (expr.charAt(i) == ')') {
-				bc--;
-			}
-			if (bc > 1 || bc < 0) {
-				// nested braces
-				valid = false;
-				break;
-			}
-			exprb.append(expr.charAt(i));
+	public static void soln(String e,int caseno) {
+		stack=new Stack<>();
+		bracOp=new Stack<>();
+		combined=0;
+		if(!Help.checkBracNdOp(e)) {
+			System.out.println("Case #"+caseno+": "+"INVALID EXPRESSION");
+			return;
 		}
-		if (bc != 0) {
-			valid = false;
+		for(int i=0;i<e.length();i++) {
+			if(!push(e.charAt(i)+"",i)) {
+				System.out.println("Case #"+caseno+": "+"INVALID EXPRESSION");
+				return;
+			}
 		}
-		exprb.append(expr.charAt(expr.length() - 1));
-		if (!valid) {
-			return "INVALID EXPRESSION";
+		List<String> fs=new ArrayList<>(stack.size());
+		for(int i=0;i<stack.size();i++) {
+			fs.add(stack.get(i));
 		}
-		calc(exprb);
+		String res=Help.solveBrac(fs);
+		if(res==null) {
+			System.out.println("Case #"+caseno+": "+"INVALID EXPRESSION");
+		}
+		else {
+			System.out.println("Case #"+caseno+": "+res);	
+		}
 		
-		return ret;
 	}
-
-	public static void calc(StringBuffer e) {
-		int sp = -1;
-		int ep = -1;
-		for (int i = 0; i < e.length(); i++) {
-			if (e.charAt(i) == '(') {
-				sp = i + 1;
+	public static boolean push(String c,int pos) {
+		if(c.equals(")")) {
+			int bracop=bracOp.pop();
+			List<String> tmp=new ArrayList<>(pos-bracop);
+			int remd=0;
+			int end=pos-combined;
+			end=stack.size();
+			int combex=0;
+			for(int i=bracop+1;i<end;i++) {
+				String el=stack.remove(i-remd++);
+				tmp.add(el);
+				combex+=el.length();
 			}
-			if (e.charAt(i) == ')') {
-				ep = i - 1;
+			stack.pop();
+			String res=Help.solveBrac(tmp);
+			if(res!=null) {
+				combined+=(combex+1);
+				stack.push(res);
+			}
+			if(res==null) {
+				return false;
 			}
 		}
-		if (sp == -1 && ep == -1) {
-			sp = 0;
-			ep = e.length() - 1;
+		if(c.equals("(")) {
+			bracOp.push(pos-combined);
 		}
-		if (sp != -1 && ep != -1) {
-			for (int i = sp; i < ep; i++) {
-				if (e.charAt(i) == '^') {
-					sp = findSp(e, i, sp);
-					ep = findEp(e, i, ep);
-				}
+		if(!oprts.contains(c)) {
+			String t="";
+			if(!stack.isEmpty() && !oprts.contains(stack.peek()))
+			{
+				t=stack.pop();
+				//combined++;
 			}
+			t+=c;
+			stack.push(t);
 		}
-		res(e.subSequence(sp, ep));
+		else if(!c.equals(")")){
+			stack.push(c);
+		}
+		return true;
 	}
-
-	public static int findSp(StringBuffer e, int i, int sp) {
-		for (int j = i - 1; j >= sp; j--) {
-			if (e.charAt(j) < 48 || e.charAt(j) > 57) {
-				sp = j + 1;
-				break;
-			}
-		}
-		return sp;
-	}
-
-	public static int findEp(StringBuffer e, int i, int ep) {
-		for (int j = i + 1; j <= ep; j--) {
-			if (e.charAt(j) < 48 || e.charAt(j) > 57) {
-				ep = j;
-				break;
-			}
-		}
-		return ep;
-	}
-
-	public static double res(CharSequence e) {
-		int op1 = 0;
-		int op2 = 0;
-		char op = ' ';
-		for (int i = 0; i < e.length(); i++) {
-			if (oprts.contains(e.charAt(i))) {
-				op = e.charAt(i);
-				op1 = Integer.parseInt(e.subSequence(0, i).toString());
-				op2 = Integer.parseInt(e.subSequence(i, e.length()).toString());
-				break;
-			}
-		}
-		switch (op) {
-		case '^':
-			return Math.pow(op1, op2);
-		case '/':
-			return op1/op2;
-		case '*':
-			return op1*op2;
-		case '+':
-			return op1+op2;
-		case '-':
-			return op1-op2;
-		}
-		return 1;
-	}
+	
 }
