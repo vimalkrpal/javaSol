@@ -1,0 +1,142 @@
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class JohnCalculator {
+
+	public static BufferedReader buf = new BufferedReader(new InputStreamReader(System.in));
+	public static int st = 48;
+	public static int ed = 57;
+	public static List<Integer> oprts = Arrays.asList(43, 45, 47, 42, 94);
+
+	public static void main(String[] args) throws Exception {
+		char a = (int) '1';
+		System.out.println(a);
+		StringBuffer sb = new StringBuffer();
+		sb.append("abcdef");
+		sb.replace(2, 4, "z");
+		System.out.println(sb);
+
+//		int loop=Integer.parseInt(buf.readLine());
+//		List<String> expl=new ArrayList<>(loop);
+//		for(int i=0;i<loop;i++) {
+//			expl.add(buf.readLine());
+//		}
+//		expl.forEach(e->{
+//			System.out.println(result(e));
+//		});
+	}
+
+	public static String result(String expr) {
+		String ret = "";
+		int res = 0;
+		int bc = 0;
+		StringBuffer exprb = new StringBuffer(expr.length());
+		boolean valid = true;
+		for (int i = 0; i < expr.length() - 1; i++) {
+			if (expr.charAt(i) > 47 && expr.charAt(i) < 58) {
+				if (expr.charAt(i + 1) > 47 && expr.charAt(i + 1) < 58) {
+					// 2 digit number found
+					valid = false;
+					break;
+				}
+			}
+			if (expr.charAt(i) == '(') {
+				bc++;
+			} else if (expr.charAt(i) == ')') {
+				bc--;
+			}
+			if (bc > 1 || bc < 0) {
+				// nested braces
+				valid = false;
+				break;
+			}
+			exprb.append(expr.charAt(i));
+		}
+		if (bc != 0) {
+			valid = false;
+		}
+		exprb.append(expr.charAt(expr.length() - 1));
+		if (!valid) {
+			return "INVALID EXPRESSION";
+		}
+		calc(exprb);
+		
+		return ret;
+	}
+
+	public static void calc(StringBuffer e) {
+		int sp = -1;
+		int ep = -1;
+		for (int i = 0; i < e.length(); i++) {
+			if (e.charAt(i) == '(') {
+				sp = i + 1;
+			}
+			if (e.charAt(i) == ')') {
+				ep = i - 1;
+			}
+		}
+		if (sp == -1 && ep == -1) {
+			sp = 0;
+			ep = e.length() - 1;
+		}
+		if (sp != -1 && ep != -1) {
+			for (int i = sp; i < ep; i++) {
+				if (e.charAt(i) == '^') {
+					sp = findSp(e, i, sp);
+					ep = findEp(e, i, ep);
+				}
+			}
+		}
+		res(e.subSequence(sp, ep));
+	}
+
+	public static int findSp(StringBuffer e, int i, int sp) {
+		for (int j = i - 1; j >= sp; j--) {
+			if (e.charAt(j) < 48 || e.charAt(j) > 57) {
+				sp = j + 1;
+				break;
+			}
+		}
+		return sp;
+	}
+
+	public static int findEp(StringBuffer e, int i, int ep) {
+		for (int j = i + 1; j <= ep; j--) {
+			if (e.charAt(j) < 48 || e.charAt(j) > 57) {
+				ep = j;
+				break;
+			}
+		}
+		return ep;
+	}
+
+	public static double res(CharSequence e) {
+		int op1 = 0;
+		int op2 = 0;
+		char op = ' ';
+		for (int i = 0; i < e.length(); i++) {
+			if (oprts.contains(e.charAt(i))) {
+				op = e.charAt(i);
+				op1 = Integer.parseInt(e.subSequence(0, i).toString());
+				op2 = Integer.parseInt(e.subSequence(i, e.length()).toString());
+				break;
+			}
+		}
+		switch (op) {
+		case '^':
+			return Math.pow(op1, op2);
+		case '/':
+			return op1/op2;
+		case '*':
+			return op1*op2;
+		case '+':
+			return op1+op2;
+		case '-':
+			return op1-op2;
+		}
+		return 1;
+	}
+}
