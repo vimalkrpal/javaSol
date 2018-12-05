@@ -11,88 +11,173 @@ public class JohnCalculator {
 	public static BufferedReader buf = new BufferedReader(new InputStreamReader(System.in));
 	public static int st = 48;
 	public static int ed = 57;
-	public static List<String> oprts = Arrays.asList("+","-","*","/","^","(",")");
-	public static Stack<String> stack=null;
-	public static Stack<Integer> bracOp=null;
-	public static int combined=0;
+	public static List<Character> oprts = Arrays.asList('+', '-', '*', '/', '^');
+	public static List<String> oprtsAll = Arrays.asList("+", "-", "*", "/", "^", "(", ")");
+	public static Stack<String> stack = null;
+	public static Stack<Integer> bracOp = null;
+	public static int combined = 0;
+
 	public static void main(String[] args) throws Exception {
-		//String e="7+((10*5^2)+(7)+(1))";
-		int loop=Integer.parseInt(buf.readLine());
-		List<String> qns=new ArrayList<>(loop);
-		while(loop-->0) {
+		// String e="7+((10*5^2)+(7)+(1))";
+		int loop = Integer.parseInt(buf.readLine());
+		List<String> qns = new ArrayList<>(loop);
+		while (loop-- > 0) {
 			qns.add(buf.readLine());
 		}
-		for(int i=0;i<qns.size();i++) {
-			soln(qns.get(i),i+1);
+		for (int i = 0; i < qns.size(); i++) {
+			soln(qns.get(i), i + 1);
 		}
 	}
-	public static void soln(String e,int caseno) {
-		stack=new Stack<>();
-		bracOp=new Stack<>();
-		combined=0;
-		if(!Help.checkBracNdOp(e)) {
-			System.out.println("Case #"+caseno+": "+"INVALID EXPRESSION");
+
+	public static void soln(String e, int caseno) {
+		stack = new Stack<>();
+		bracOp = new Stack<>();
+		combined = 0;
+		if (!checkBracNdOp(e)) {
+			System.out.println("Case #" + caseno + ": " + "INVALID EXPRESSION");
 			return;
 		}
-		for(int i=0;i<e.length();i++) {
-			if(!push(e.charAt(i)+"",i)) {
-				System.out.println("Case #"+caseno+": "+"INVALID EXPRESSION");
+		for (int i = 0; i < e.length(); i++) {
+			if (!push(e.charAt(i) + "", i)) {
+				System.out.println("Case #" + caseno + ": " + "INVALID EXPRESSION");
 				return;
 			}
 		}
-		List<String> fs=new ArrayList<>(stack.size());
-		for(int i=0;i<stack.size();i++) {
+		List<String> fs = new ArrayList<>(stack.size());
+		for (int i = 0; i < stack.size(); i++) {
 			fs.add(stack.get(i));
 		}
-		String res=Help.solveBrac(fs);
-		if(res==null) {
-			System.out.println("Case #"+caseno+": "+"INVALID EXPRESSION");
+		String res = solveBrac(fs);
+		if (res == null) {
+			System.out.println("Case #" + caseno + ": " + "INVALID EXPRESSION");
+		} else {
+			System.out.println("Case #" + caseno + ": " + res);
 		}
-		else {
-			System.out.println("Case #"+caseno+": "+res);	
-		}
-		
+
 	}
-	public static boolean push(String c,int pos) {
-		if(c.equals(")")) {
-			int bracop=bracOp.pop();
-			List<String> tmp=new ArrayList<>(pos-bracop);
-			int remd=0;
-			int end=pos-combined;
-			end=stack.size();
-			int combex=0;
-			for(int i=bracop+1;i<end;i++) {
-				String el=stack.remove(i-remd++);
+
+	public static boolean push(String c, int pos) {
+		if (c.equals(")")) {
+			int bracop = bracOp.pop();
+			List<String> tmp = new ArrayList<>(pos - bracop);
+			int remd = 0;
+			int end = pos - combined;
+			end = stack.size();
+			int combex = 0;
+			for (int i = bracop + 1; i < end; i++) {
+				String el = stack.remove(i - remd++);
 				tmp.add(el);
-				combex+=el.length();
+				combex += el.length();
 			}
 			stack.pop();
-			String res=Help.solveBrac(tmp);
-			if(res!=null) {
-				combined+=(combex+1);
+			String res = solveBrac(tmp);
+			if (res != null) {
+				combined += (combex + 1);
 				stack.push(res);
 			}
-			if(res==null) {
+			if (res == null) {
 				return false;
 			}
 		}
-		if(c.equals("(")) {
-			bracOp.push(pos-combined);
+		if (c.equals("(")) {
+			bracOp.push(pos - combined);
 		}
-		if(!oprts.contains(c)) {
-			String t="";
-			if(!stack.isEmpty() && !oprts.contains(stack.peek()))
-			{
-				t=stack.pop();
-				//combined++;
+		if (!oprtsAll.contains(c)) {
+			String t = "";
+			if (!stack.isEmpty() && !oprtsAll.contains(stack.peek())) {
+				t = stack.pop();
 			}
-			t+=c;
+			t += c;
 			stack.push(t);
-		}
-		else if(!c.equals(")")){
+		} else if (!c.equals(")")) {
 			stack.push(c);
 		}
 		return true;
 	}
-	
+
+	public static boolean checkBracNdOp(String e) {
+		int bc = 0;
+
+		for (int i = 0; i < e.length() - 1; i++) {
+			if (e.charAt(i) == '(') {
+				bc += 1;
+			} else if (e.charAt(i) == ')') {
+				bc -= 1;
+			}
+			if (bc < 0) {
+				return false;
+			}
+			char c1 = e.charAt(i);
+			char c2 = e.charAt(i + 1);
+			if (oprts.contains(c1) && oprts.contains(c2)) {
+				return false;
+			}
+			int cc = (int) e.charAt(i);
+			int cc1 = (int) e.charAt(i + 1);
+			if (cc > 47 && cc < 58) {
+				if (cc1 < 48 || cc1 > 57) {
+					char ccc = e.charAt(i + 1);
+					if (!oprts.contains(ccc) && ccc != ')') {
+						return false;
+					}
+				}
+			}
+		}
+		if (e.charAt(e.length() - 1) == ')') {
+			bc -= 1;
+		}
+		if (bc != 0) {
+			return false;
+		}
+		return true;
+	}
+
+	public static String solveBrac(List<String> e) {
+		if (e.size() < 1) {
+			return null;
+		}
+		int oppos = -1;
+		Double res = 0d;
+		if (oppos == -1)
+			oppos = e.indexOf("^");
+		if (oppos == -1)
+			oppos = e.indexOf("/");
+		if (oppos == -1)
+			oppos = e.indexOf("*");
+		if (oppos == -1)
+			oppos = e.indexOf("+");
+		if (oppos == -1)
+			oppos = e.indexOf("-");
+		if (oppos == -1) {
+			if (e.size() != 1) {
+				return null;
+			}
+			return e.get(0);
+		}
+		double op1 = Double.parseDouble(e.get(oppos - 1));
+		double op2 = Double.parseDouble(e.get(oppos + 1));
+		char op = e.get(oppos).toCharArray()[0];
+		switch (op) {
+		case '^':
+			res = Math.pow(op1, op2);
+			break;
+		case '/':
+			res = op1 / op2;
+			break;
+		case '*':
+			res = op1 * op2;
+			break;
+		case '+':
+			res = op1 + op2;
+			break;
+		case '-':
+			res = op1 - op2;
+			break;
+		}
+		e.remove(oppos - 1);
+		e.remove(oppos - 1);
+		e.set(oppos - 1, res + "");
+		return solveBrac(e);
+	}
+
 }
